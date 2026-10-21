@@ -1,18 +1,42 @@
 # lsm
 
-A term language for left skew monoidal categories, built to become a REPL
-in which real banking morphisms can be typed in on the assumption that
-their category is left skew monoidal.
+A left skew monoidal implementation. Banking with categories, not
+categories with banking.
+
+That ordering of words is the whole thesis, as it is for `cqm`. The
+usual approach takes banking as it is practised (accounts, ledgers,
+payment rails, API schemas) and *notices* that some of its structure
+looks categorical. This project inverts that: it starts from the
+categorical structure itself (objects, morphisms, composition, tensor,
+unit, and the structure maps α, λ, ρ, none of them required to be
+invertible) and treats *that* as the theory. Banking shows up only as
+models of the categorical terms, not as the substrate the terms are
+built from. If banking really is left skew monoidal, the category should
+be primary and any banking system one model among possible others, not
+the thing being modelled.
 
 ## Direction
 
-The goal is the REPL: write a banking flow as a term, see its type, and
-find out whether it can be written at all. Computing rewrites and
-deciding equivalence are not priorities. Where they are needed they are
-done by hand, and the REPL's job is to keep every hand-made step
-well-typed. If left skew monoidal proves to be the right category for
-banking, the work extends to rewriting and equivalence in the way
-DisCoPy does for the monoidal case. Until then it does not.
+The definition is the only authority on what lsm contains. Banking
+supplies models. Each illustration starts from a piece of the structure
+("what makes λ go one way only?") and looks for a banking instance that
+witnesses it, not the reverse. An illustration earns its place only if
+it exercises skewness: it names the structure map it witnesses and shows
+that the map has no inverse in the model. One that would work equally
+well in the strict setting belongs with `cqm`.
+
+When a banking situation seems to need something the definition does not
+give (a partial tensor, linearity, a fixed order of checks), that belongs
+to a particular model, or it shows the model is not skew monoidal. It is
+never a reason to change lsm.
+
+The near-term tool is a REPL: write a term, see its type, and find out
+whether it can be written at all. Computing rewrites and deciding
+equivalence are not priorities. Where they are needed they are done by
+hand, and the REPL's job is to keep every hand-made step well-typed. If
+left skew monoidal proves to be the right category for banking, the work
+extends to rewriting and equivalence in the way DisCoPy does for the
+monoidal case. Until then it does not.
 
 `cqm` is the stepping stone. It worked out the term/interpretation split
 and the REPL notation for the free strict monoidal category, in the
@@ -146,8 +170,8 @@ were corrected to what was observed.
 Recorded so they are not rediscovered by accident, and kept out of the
 code until a source licenses them.
 
-**Generating morphisms (`Box`).** Real transactions are generating
-morphisms, so the REPL needs them. The literature splits them in two:
+**Generating morphisms (`Box`).** A REPL for writing down models needs
+generating morphisms. The literature splits them in two:
 
 - *Typed atom → atom, forming a category X:* covered. Lack–Street
   Thm 12.2: a morphism of the free skew monoidal category on X is a
@@ -158,8 +182,9 @@ morphisms, so the REPL needs them. The literature splits them in two:
   the natural home for many-input, one-output generators, but give no
   free construction on them.
 
-Real transactions probably need the second kind. By the increment rule,
-only the first can go in now. Typing alone would survive the second kind;
+Banking models would probably want the second kind. That is a fact about
+those models, not a requirement on lsm: by the increment rule, only the
+first can go in now. Typing alone would survive the second kind;
 the decision procedures would not, and would have to refuse such terms.
 
 **The notation layer.** `cqm`'s operators (`>>`, `@`, whiskering), its
