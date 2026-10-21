@@ -1,1 +1,252 @@
 # lsm
+
+A term language for left skew monoidal categories, built to become a REPL
+in which real banking morphisms can be typed in on the assumption that
+their category is left skew monoidal.
+
+## Direction
+
+The goal is the REPL: write a banking flow as a term, see its type, and
+find out whether it can be written at all. Computing rewrites and
+deciding equivalence are not priorities. Where they are needed they are
+done by hand, and the REPL's job is to keep every hand-made step
+well-typed. If left skew monoidal proves to be the right category for
+banking, the work extends to rewriting and equivalence in the way
+DisCoPy does for the monoidal case. Until then it does not.
+
+`cqm` is the stepping stone. It worked out the term/interpretation split
+and the REPL notation for the free strict monoidal category, in the
+familiar setting of quantum mechanics. This project takes the method and
+the notation, and none of the strict core.
+
+One caveat governs everything downstream. Writing every known banking
+example as a term here would show that left skew monoidal is expressive
+enough. It would not show that banking *is* left skew monoidal. Any
+category with at least as much structure would also express them, and a
+corpus that never uses α⁻¹ only shows that nobody drew one. The claim has
+content only through what it forbids and what it identifies: maps that
+must not exist, and composites that must or must not be equal.
+
+## What is written down, and what isn't
+
+The rules are `cqm`'s, with one addition.
+
+**Falsifiability before a test is written.** Every test names, in its
+comment, an implementation that would make it fail. Where that claim has
+been checked by mutation it says so; where it is only argued it says that.
+
+**No comment that restates the code.** A comment states what the reader
+cannot deduce from the code: verified versus assumed, chosen versus
+forced, what a test would catch.
+
+**Citation discipline.** A theorem number or section reference is written
+down only after it has been read in the source. The register of what has
+been checked is under [Citations](#citations). Anything not on it is
+unchecked.
+
+**Increments the maths dictates.** Each commit carries one change and one
+justification, a cited result, named in the commit message. Undoing it is
+one `git revert`, with no list of side effects to remember. Changes are
+additive where possible, and nothing goes in ahead of a source that
+licenses it, however useful it looks. The first source to look in is the
+touchstone, UVZ (see [Citations](#citations)).
+
+## Scope
+
+**Left skew, in these directions:** λ_A : I⊗A → A, ρ_A : A → A⊗I,
+α_{A,B,C} : (A⊗B)⊗C → A⊗(B⊗C). None has an inverse, and no inverse can
+be built from the generators (UVZ §2). Right skew reverses all three (Szlachányi Def. 2.1) and
+is left skew on the opposite category (Uustalu §2), so "left" is a claim
+about which way the modelled morphisms point.
+
+**Objects are bracketed trees,** not words. `(X⊗Y)⊗Z` and `X⊗(Y⊗Z)` are
+different objects joined only by α, in one direction. Flattening brackets,
+which is how `cqm` makes its core strict, is exactly what is denied here.
+
+**No dagger.** A dagger would supply α† : A⊗(B⊗C) → (A⊗B)⊗C, which does not
+exist (UVZ §2).
+
+**No swap.** Terms are planar.
+
+**No generating morphisms yet.** The free skew monoidal category here is
+free on a set of atoms. Its only morphisms are built from identities,
+composition, ⊗ and the three structure maps. See
+[Not decided](#not-decided) for what the literature allows beyond that.
+
+**Composition is diagrammatic.** `Then(f, g)` is "f, then g", which UVZ
+and Mac Lane write `g ∘ f`. It is also how UVZ's cut rules read, so the
+sequent calculus is transcribed rather than translated.
+
+## The design
+
+As in `cqm`, a morphism is a term: a tree over `Id`, `Then`, `Tensor`,
+`Lam`, `Rho` and `Alpha`, with no numbers in it. Domains and codomains are
+computed from the tree, never stored, so a term cannot carry a type its
+structure contradicts. `Then` refuses to compose terms whose types do not
+meet. That typing is what the REPL will rest on.
+
+Interpretation is a separate file. The universal property that licenses
+it is UVZ Proposition 1: any assignment of atoms in a skew monoidal
+category extends uniquely to a strict monoidal functor out of the free
+one.
+
+## State
+
+Three suites, plain `assert`, no framework. Each runs directly.
+
+**`skew_terms.py`** (10 tests). Objects, terms and typing, and the
+obligations stated as data before any procedure existed to meet them:
+
+- `AXIOMS`: the five axioms, the category laws, interchange and
+  naturality. Eleven equations.
+- `MUST_NOT_IDENTIFY`: four parallel pairs that are distinct. Three are
+  Lack–Street's idempotents ε₀, εˡ, εʳ, each against the identity. The
+  fourth is Uustalu's λ_{I⊗X} ≠ id⊗λ_X.
+- `NO_MAP_EXISTS`: three homsets that are empty, with equal frontiers and
+  a map in the other direction.
+- `NO_MAP_EITHER_WAY`: one pair with no map in either direction, from
+  Uustalu §3.
+- `DERIVABILITY_AUDIT`: nineteen structure-map instances, each with the
+  size of its homset. Fourteen are forced by their type and five are not.
+- `MUST_NOT_DERIVE_FROM_B_AND_E`: axioms (a), (c), (d), which do not
+  follow from (b) and (e) here as they do in the monoidal case. Stated,
+  not established; see [Not decided](#not-decided).
+
+**`skew_seq.py`** (18 tests). The focused sequent calculus of UVZ §5,
+with the decision procedures it yields: `equal` (Theorem 5), `homset`
+(Theorem 6, every map without duplicates) and `hom_exists` (Lemma 21).
+Every obligation above is discharged here. Two tests are predictions
+from other proofs that nothing in the file was built to meet: Tamari
+thinness of the unit-free fragment (Zeilberger, Thm 1.17), and exactly
+one map into each normal form and out of each reverse normal form
+(Uustalu, Prop. 6).
+
+**`interp.py`, `test_interp.py`** (7 tests). Terms interpreted in ∆⊥,
+finite non-empty ordinals with order- and bottom-preserving maps
+(Lack–Street §3). That functor is faithful (Lack–Street Cor. 11.4), so
+`equal_in_delta` is a second complete decision procedure that shares no
+code with `skew_seq`. The tests check that the axioms hold in ∆⊥,
+faithfulness on a two-atom sweep, and that the two procedures agree on
+every parallel pair tried. Nothing in the term layer imports this file.
+
+So for terms built only from structure maps, equality is decided twice,
+completely, by routes that share nothing. That is stronger than `cqm`
+manages, whose `equal` is sound but incomplete and whose FdHilb functor
+is not faithful. It is not because skew is easier. This presentation was
+solved in the literature.
+
+**Mutation.** There is no `mutate.py` yet. One-off checks have been run:
+eight mutants against the first two suites when they were written, and
+six against the current three, with every test run on its own under each.
+Every mutant was caught. Two test comments named the wrong catcher and
+were corrected to what was observed.
+
+## Not decided
+
+Recorded so they are not rediscovered by accident, and kept out of the
+code until a source licenses them.
+
+**Generating morphisms (`Box`).** Real transactions are generating
+morphisms, so the REPL needs them. The literature splits them in two:
+
+- *Typed atom → atom, forming a category X:* covered. Lack–Street
+  Thm 12.2: a morphism of the free skew monoidal category on X is a
+  morphism φ of Fsk together with one X-morphism per atom wire,
+  Xᵢ → Y_{φ(i)}.
+- *Typed by formulae,* such as `pay : Account ⊗ Amount → Receipt ⊗ Account`:
+  not covered by any source read. Bourke–Lack's skew multicategories are
+  the natural home for many-input, one-output generators, but give no
+  free construction on them.
+
+Real transactions probably need the second kind. By the increment rule,
+only the first can go in now. Typing alone would survive the second kind;
+the decision procedures would not, and would have to refuse such terms.
+
+**The notation layer.** `cqm`'s operators (`>>`, `@`, whiskering), its
+Python-valid `repr` and its type-printing echo. They need only a
+category and a functor ⊗, which a skew monoidal category has. On this
+side the operators must keep the user's bracketing, and there is no
+`.dag`.
+
+**Independence of (a), (c), (d).** Stated by UVZ §2 and Uustalu §2.
+Kelly's monoidal derivation (Thms 6–7) cancels against isomorphisms,
+which is the step skewness removes, but no source read gives a
+countermodel. ∆⊥ cannot be one: all five axioms hold in it.
+
+**Parked threads.** Raised in discussion and deliberately not planned:
+
+- *Swaps.* UML `par` on a shared participant interleaves events, which
+  needs a swap or a partial commutation. On disjoint participants it is
+  just ⊗.
+- *Activations as wires.* What a sequence diagram commits to is the
+  activation bar, not the lifeline. Nested bars form a stack, which fits
+  the stoup. An idle stretch of lifeline is a candidate meaning for I. A
+  conjecture only.
+- *The corpus.* BIAN publishes sequence diagrams the REPL should be able
+  to recreate, subject to the caveat under [Direction](#direction).
+- *The Cat-Banking quotient.* As a functor out of these terms it would
+  supply an empirical equivalence to test the equations against. It can
+  only be lax monoidal.
+- *Rewriting and equivalence for terms with boxes.*
+- *A `mutate.py` port.*
+
+## Cross-strand notes
+
+From `cqm`: the term/interpretation split, an interpretation fixed by its
+values on generators, two independent routes to the same answer, the
+falsifiability filter, and mutation testing. Method and tooling cross
+freely; subject matter does not. `cqm` stays strict, and nothing here
+parametrises its core over which theory it is in.
+
+## Citations
+
+**The touchstone is UVZ.** Heunen & Vicary play this role for `cqm`:
+everything traces there, and what cannot be traced there does not go in.
+Here the term layer, the sequent calculus and both decision procedures
+are transcriptions of Uustalu, Veltri & Zeilberger. Its scope is the
+project's boundary: it covers the free skew monoidal category on a set
+of atoms, and nothing with generating morphisms. The other sources below
+are admitted for what UVZ does not cover: ∆⊥ and boxes typed atom → atom
+(Lack–Street), the axioms at their origin (Szlachányi), and independent
+cross-checks. Where they and UVZ overlap, UVZ is the reference cited.
+
+Checked against the source, all attached to this project:
+
+- **Uustalu, Veltri & Zeilberger**, *The sequent calculus of skew monoidal
+  categories*, arXiv:2003.05213v1, the revised and extended version of
+  the MFPS 2018 paper. §2: Figure 1, the directions, Proposition 1, the
+  frontier, the non-existence and non-equality examples, laws (a)–(e).
+  §3: Figure 4, the antecedent interpretation, Lemmata 1–4, Theorem 2.
+  §5: Figure 8, Lemma 17, Lemma 21, Theorems 5 and 6.
+- **Szlachányi**, *Skew-monoidal categories and bialgebroids*, Adv. Math.
+  231 (2012), read as arXiv:1201.4981v2. Definition 2.1 and the left/right
+  duality following it.
+- **Lack & Street**, *Triangulations, orientals, and skew monoidal
+  categories*, Adv. Math. 258 (2014), read as arXiv:1302.4488v1, whose
+  numbering is cited. §2, (2.4)–(2.8) and the idempotents ε₀, εˡ, εʳ; §3,
+  ∆⊥ and its structure maps; §11, Corollary 11.4 and the worked example;
+  §12, Theorem 12.2.
+- **Bourke & Lack**, *Free skew monoidal categories*, arXiv:1708.06087v3.
+  §1–2, clubbability; Propositions 7.3–7.7, the axioms in this
+  orientation.
+- **Bourke & Lack**, *Skew monoidal categories and skew multicategories*,
+  J. Algebra 506 (2018), read as arXiv:1708.06088v2. Theorem 6.1, tight
+  and loose multimaps.
+- **Uustalu**, *Coherence for skew-monoidal categories*, MSFP 2014, EPTCS
+  153, pp. 68–77. §2, the axioms and handedness; §3, Proposition 6 and
+  the examples.
+- **Zeilberger**, *A sequent calculus for a semi-associative law*, LMCS
+  15(1):9 (2019). Theorems 1.2, 1.6, 1.17; §1.6.
+- **Kelly**, *On MacLane's conditions for coherence of natural
+  associativities, commutativities, etc.*, J. Algebra 1 (1964), 397–402.
+  Theorems 6 and 7. The diagrams did not survive text extraction; the
+  numbered conditions were identified from the wording of the proofs.
+
+Cited secondhand, not read: Lack–Street Theorem 12.2 rests on Kelly's
+theory of clubs (*An abstract approach to coherence*, LNM 281, 1972),
+which is not attached. *Braided skew monoidal categories*, TAC 35, would
+be the first thing to read if swaps are taken up; not yet read, and its
+authorship not checked.
+
+Heunen & Vicary, *Categories for Quantum Theory*, is attached for the
+`cqm` strand. Nothing here is cited to it.
