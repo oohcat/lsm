@@ -430,6 +430,49 @@ NO_MAP_EXISTS = [
 ]
 
 
+# Axioms that do NOT follow from (b) and (e) here, though in the monoidal
+# case they do. Stated, not established: UVZ §2 and Uustalu (MSFP 2014) §2
+# both assert it, and neither gives a countermodel. The monoidal derivation
+# is Kelly (1964), Theorems 6 and 7, and both proofs cancel against an
+# isomorphism — the step skewness removes. Discharging this needs a skew
+# monoidal category where (b) and (e) hold and the named axiom fails; no
+# such model is in any source read so far. `skew_seq` can only check that
+# each is a non-trivial equation (see `_test_kelly_axioms_are_not_vacuous`).
+MUST_NOT_DERIVE_FROM_B_AND_E = ["a: unit triangle", "c: λ triangle", "d: ρ triangle"]
+
+
+# Structure-map instances at bracketed objects, each with the size of the
+# homset it lives in. A size of 1 means the map is forced by its endpoints;
+# anything larger means naming the instance is a real choice.
+#
+# Reconstructed 2026-10-21: the version `skew_seq` was written against was
+# never pushed and is lost. The sizes are measured by `skew_seq.homset`,
+# not recalled. Two are independently confirmed in the literature: λ_{I⊗X}
+# (Uustalu §3: λ ≠ id⊗λ on I⊗(I⊗X) ⇒ I⊗X) and α_{X,I,Y}, whose homset
+# contains α and the composite through the idempotent ε of Lack–Street §2.
+DERIVABILITY_AUDIT = [
+    ("λ_X", Lam(X), 1),
+    ("λ_I", Lam(I), 1),
+    ("λ_{X⊗Y}", Lam(Tens(X, Y)), 1),
+    ("λ_{X⊗I}", Lam(Tens(X, I)), 1),
+    ("λ_{I⊗X}", Lam(Tens(I, X)), 2),
+    ("ρ_X", Rho(X), 1),
+    ("ρ_I", Rho(I), 1),
+    ("ρ_{X⊗Y}", Rho(Tens(X, Y)), 1),
+    ("ρ_{I⊗X}", Rho(Tens(I, X)), 1),
+    ("ρ_{X⊗I}", Rho(Tens(X, I)), 2),
+    ("α_{X,Y,Z}", Alpha(X, Y, Z), 1),
+    ("α_{I,X,Y}", Alpha(I, X, Y), 1),
+    ("α_{X,Y,I}", Alpha(X, Y, I), 1),
+    ("α_{X⊗Y,Z,W}", Alpha(Tens(X, Y), Z, W), 1),
+    ("α_{X,Y⊗Z,W}", Alpha(X, Tens(Y, Z), W), 1),
+    ("α_{X,Y,Z⊗W}", Alpha(X, Y, Tens(Z, W)), 1),
+    ("α_{X,I,Y}", Alpha(X, I, Y), 2),
+    ("α_{I,I,X}", Alpha(I, I, X), 3),
+    ("α_{X,I,I}", Alpha(X, I, I), 3),
+]
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -510,6 +553,15 @@ def _test_frontier_is_not_sufficient():
     for name, a, b in NO_MAP_EXISTS:
         assert frontier(a) == frontier(b), name
         assert a != b, name
+
+
+def _test_obligation_names_resolve():
+    # MUST_NOT_DERIVE_FROM_B_AND_E names axioms by string, so a renamed
+    # entry in _axioms() would silently drop out of the Kelly check.
+    # Fails under: renaming an axiom without updating the list.
+    names = {n for n, _, _ in AXIOMS}
+    for n in MUST_NOT_DERIVE_FROM_B_AND_E:
+        assert n in names, n
 
 
 def _test_syntactic_equality_is_not_semantic():

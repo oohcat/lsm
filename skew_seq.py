@@ -86,6 +86,7 @@ from typing import List, Optional, Tuple
 from skew_terms import (
     AXIOMS,
     DERIVABILITY_AUDIT,
+    MUST_NOT_DERIVE_FROM_B_AND_E,
     MUST_NOT_IDENTIFY,
     NO_MAP_EXISTS,
     Alpha,
@@ -731,7 +732,7 @@ def _test_kelly_axioms_are_not_vacuous():
     # Recorded as a partial check so the gap is visible rather than
     # papered over by a passing test.
     by_name = {n: (l, r) for n, l, r in AXIOMS}
-    for name in ("a: unit triangle", "c: λ triangle", "d: ρ triangle"):
+    for name in MUST_NOT_DERIVE_FROM_B_AND_E:
         lhs, rhs = by_name[name]
         assert lhs != rhs, name
         assert cmplt(lhs) == cmplt(rhs), name
@@ -745,27 +746,32 @@ def _test_derivability_audit():
     # derived from the six rules whether their arguments are atomic or
     # composite. The `cqm` failure mode has no foothold here.
     #
-    # Second: every audited instance is the *unique* map of its type, so
-    # each is forced by its endpoints alone and carries no choice.
+    # Second: the result is not uniform. Most instances are the unique map
+    # of their type, but where a unit sits under a bracket of the domain
+    # the homset can be larger, and naming the instance is a real choice.
     #
-    # An earlier version of this test asserted that ρ_I : I ⇒ I⊗I would
-    # be ambiguous, on the reasoning that axiom (a) is about ρ_I. That
-    # was a guess and it is false: I ⇒ I⊗I is a singleton. The guess
-    # confused the map with the homset it lands in — ambiguity in Fsk
-    # lives in the *endo*-homsets (see _test_homsets_are_not_thin), not
-    # at the structure maps themselves. Recorded because the assertion
-    # failing is the only reason the confusion was caught.
+    # Two wrong generalisations have been made here and both are kept on
+    # record. An earlier version asserted ρ_I : I ⇒ I⊗I was ambiguous
+    # because axiom (a) is about ρ_I; it is a singleton. The correction
+    # then over-generalised to "ambiguity lives only in the endo-homsets,
+    # never at the structure maps", and asserted every audited instance
+    # was unique. That is also false: λ_{I⊗X} : I⊗(I⊗X) ⇒ I⊗X has a second
+    # map, id⊗λ_X (Uustalu, MSFP 2014, §3), and α_{X,I,Y} has α followed
+    # by the idempotent of Lack–Street §2. The sizes are now recorded per
+    # instance in DERIVABILITY_AUDIT rather than asserted uniformly.
     #
     # Fails under: a homset enumeration that misses maps, which would
-    # make everything look spuriously forced; or one that invents them,
-    # which would make the uniqueness claim collapse.
+    # make instances look spuriously forced; or one that invents them,
+    # which would make forced instances look like choices.
     report = []
-    for name, term in DERIVABILITY_AUDIT:
+    for name, term, size in DERIVABILITY_AUDIT:
         maps = homset(term.dom, term.cod)
         assert maps, f"structure map not derivable: {name}"
         assert any(equal(m, term) for m in maps), f"not found: {name}"
-        assert len(maps) == 1, f"not forced by its type: {name} ({len(maps)})"
-        report.append(name)
+        assert len(maps) == size, f"{name}: homset has {len(maps)}, recorded {size}"
+        report.append((name, size))
+    assert any(s == 1 for _, s in report) and any(s > 1 for _, s in report), \
+        "audit no longer exercises both outcomes"
     _test_derivability_audit.report = report
 
 
@@ -913,12 +919,12 @@ def _run():
     print(f"\n{len(tests)} tests passed")
 
     report = _test_derivability_audit.report
-    print(f"\nderivability audit — all {len(report)} instances unique of their type:")
-    for name in report:
-        print(f"  forced   {name}")
+    print(f"\nderivability audit — {len(report)} structure-map instances:")
+    for name, size in report:
+        print(f"  {'forced' if size == 1 else f'choice ({size} maps)':16} {name}")
 
-    print("\nhomset sizes — ambiguity lives in the endo-homsets, not the")
-    print("structure maps, and only where a unit sits under a bracket:")
+    print("\nhomset sizes — multiplicity appears only where a unit sits")
+    print("under a bracket:")
     for A, C in [
         (Tens(I, I), Tens(I, I)),
         (Tens(Tens(X, I), Y), Tens(Tens(X, I), Y)),
