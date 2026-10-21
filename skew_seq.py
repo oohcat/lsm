@@ -49,12 +49,19 @@ read in the source:
     `focderivs` / `homset`.
   - §5, Theorem 5 (coherence: equality). Transcribed as `equal`.
 
-NOT checked: the orientation of triangles (b), (c) and (d) in
-`skew_terms.AXIOMS`, which were reconstructed rather than read, because
-they are typeset diagrams that did not survive text extraction. This
-file is what settles them — see `_test_axioms_hold`, which fails loudly
-if a reconstruction was wrong. That is the whole reason the axioms were
-written down as data before this file existed.
+Also checked: Uustalu, *Coherence for skew-monoidal categories*, MSFP 2014,
+§3, Proposition 6 — every object has exactly one map into its normal form
+X₁⊗(X₂⊗(…⊗(Xₙ⊗I))), and dually exactly one map out of its reverse normal
+form ((I⊗X₁)⊗…)⊗Xₙ. A sufficient condition for uniqueness only; Uustalu
+notes that Lack–Street give the necessary and sufficient one, which is
+what `interp.py` uses. Tested in `_test_uustalu_normal_forms`, an
+independent prediction nothing in this file was built to satisfy.
+
+Formerly NOT checked, now closed: the orientation of triangles (b), (c)
+and (d) in `skew_terms.AXIOMS`. They were reconstructed rather than read,
+and `_test_axioms_hold` was written to fail loudly if a reconstruction was
+wrong. It passed, and the orientations have since been read in three
+sources (see the `skew_terms` docstring).
 
 A NOTE ON THE DERIVABILITY AUDIT
 --------------------------------
@@ -88,6 +95,7 @@ from skew_terms import (
     DERIVABILITY_AUDIT,
     MUST_NOT_DERIVE_FROM_B_AND_E,
     MUST_NOT_IDENTIFY,
+    NO_MAP_EITHER_WAY,
     NO_MAP_EXISTS,
     Alpha,
     Atom,
@@ -658,11 +666,10 @@ def _test_axioms_hold():
     # The five Szlachányi axioms, the category laws, and interchange must
     # all be identified by the decision procedure.
     #
-    # This is also what settles the unchecked reconstruction flagged in
-    # skew_terms: triangles (b), (c) and (d) were oriented from memory of
-    # the standard axioms because UVZ's diagrams did not survive text
-    # extraction. A wrong orientation is a well-typed, parallel pair of
-    # terms that is simply *not* an equation of Fsk, so it fails here.
+    # This was also how the reconstructed orientation of triangles (b),
+    # (c) and (d) was first checked, before the sources were read: a
+    # wrong orientation is a well-typed, parallel pair of terms that is
+    # simply *not* an equation of Fsk, so it would fail here.
     # Fails under: a mis-oriented triangle, or a normaliser that quotients
     # too little.
     for name, lhs, rhs in AXIOMS:
@@ -690,6 +697,55 @@ def _test_no_map_exists():
         assert not hom_exists(a, b), f"map should not exist: {name}"
         # ...and the other direction *does* exist, or the test is vacuous.
         assert hom_exists(b, a), f"expected the forward map: {name}"
+
+
+def _test_no_map_either_way():
+    # Uustalu §3 shows the first direction is empty; the second is a
+    # finding of this procedure, recorded after a guess that it existed
+    # failed. To stay non-vacuous without a forward map, both objects are
+    # shown to have *some* map out — into their common normal form, which
+    # Uustalu Prop. 6 guarantees — so the empty homsets are not an artefact
+    # of a search that finds nothing from these objects at all.
+    # Fails under: a search that loses derivations, e.g. dropping the
+    # shift rule, through the non-vacuity check (mutation-tested). That it
+    # also catches a dropped stoup restriction is argued, not tested: the
+    # unrestricted calculus derives α⁻¹, and with it a map one way.
+    for name, a, b in NO_MAP_EITHER_WAY:
+        assert frontier(a) == frontier(b), name
+        assert not hom_exists(a, b), f"{name}: forward map exists"
+        assert not hom_exists(b, a), f"{name}: backward map exists"
+        nf = _normal_form(frontier(a))
+        assert hom_exists(a, nf) and hom_exists(b, nf), f"{name}: vacuous"
+
+
+def _normal_form(atoms) -> Fma:
+    """Uustalu's normal form: X₁⊗(X₂⊗(…⊗(Xₙ⊗I)))."""
+    A: Fma = I
+    for a in reversed(atoms):
+        A = Tens(Atom(a), A)
+    return A
+
+
+def _reverse_normal_form(atoms) -> Fma:
+    """Uustalu's reverse normal form: ((I⊗X₁)⊗X₂)…⊗Xₙ."""
+    A: Fma = I
+    for a in atoms:
+        A = Tens(A, Atom(a))
+    return A
+
+
+def _test_uustalu_normal_forms():
+    # Uustalu Prop. 6 and its dual: for every A, exactly one map
+    # A ⇒ nf(A) and exactly one map rnf(A) ⇒ A. Nothing in this file was
+    # written to make that true; it is a prediction from a different proof
+    # (normalising rewrites, not focusing) about the same category.
+    # Fails under: a focderivs that fabricates derivations (count > 1), or
+    # one that misses the canonical normalising map (count 0).
+    fs = _formulae(2, [X, Y], with_unit=True)
+    for A in fs:
+        atoms = frontier(A)
+        assert len(homset(A, _normal_form(atoms))) == 1, ("into nf", A)
+        assert len(homset(_reverse_normal_form(atoms), A)) == 1, ("out of rnf", A)
 
 
 def _test_enumeration_is_duplicate_free():

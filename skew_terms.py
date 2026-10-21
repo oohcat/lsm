@@ -33,19 +33,36 @@ Skew Monoidal Categories* (arXiv:2003.05213, the extended journal version):
   - §2, the three non-derivable sequents and the three pairs of distinct
     parallel maps. See `NO_MAP_EXISTS` and `MUST_NOT_IDENTIFY`.
 
-NOT checked against its own source: Szlachányi, *Skew-monoidal categories
-and bialgebroids*, Adv. Math. 231 (2012). The five axioms below are taken
-from UVZ's presentation of it, not from Szlachányi directly.
+The five axioms (a)–(e), checked against three sources:
 
-NOT fully checked even in UVZ: the commuting triangles (a)–(e) are
-typeset as diagrams, and the orientation of (b), (c) and (d) below was
-reconstructed from the standard statement of the skew monoidal axioms
-rather than read off the rendered diagrams. They are well-typed (the
-tests confirm that much) and they are the usual ones, but the
-*orientation* of each triangle is the part to re-check against a typeset
-copy before any of it is cited in the paper. This is the same class of
-error as the Mac Lane VII.2-vs-XI.3 mixup recorded in `cqm`, caught
-early rather than late.
+  - Szlachányi, *Skew-monoidal categories and bialgebroids*, Adv. Math.
+    231 (2012), Definition 2.1. Stated there for *right*-monoidal
+    categories, where all three maps point the other way; his left-monoidal
+    structure reverses every comparison, and reversing (1)–(5) gives
+    (e), (c), (d), (b), (a) below.
+  - Lack & Street, *Triangulations, orientals, and skew monoidal
+    categories*, Adv. Math. 258 (2014), §2, (2.4)–(2.8), in this
+    orientation.
+  - Bourke & Lack, *Free skew monoidal categories*, arXiv:1708.06087,
+    Propositions 7.3–7.7, in this orientation.
+
+History, kept because it is the citation rule working: an earlier version
+of this docstring said the orientation of (b), (c), (d) was reconstructed
+rather than read, and that the axioms came from UVZ's presentation of
+Szlachányi rather than from Szlachányi. Both flags are now closed by the
+sources above, and independently by `skew_seq._test_axioms_hold`.
+
+Also checked, for the obligations below:
+
+  - Uustalu, *Coherence for skew-monoidal categories*, MSFP 2014, §3: the
+    non-existence and non-equality examples in `NO_MAP_EITHER_WAY` and
+    `MUST_NOT_IDENTIFY`, and Proposition 6 (maps into a normal form are
+    unique), tested in `skew_seq`.
+  - Lack & Street §2: the three idempotents ε₀, εˡ, εʳ, which are exactly
+    the first three `MUST_NOT_IDENTIFY` pairs (each against the identity).
+  - Kelly, *On MacLane's conditions for coherence*, J. Algebra 1 (1964),
+    Theorems 6–7: the monoidal derivation of (a), (c), (d) from (b), (e).
+    See `MUST_NOT_DERIVE_FROM_B_AND_E` for why it does not transfer.
 
 WHAT THIS FILE DOES NOT DO
 --------------------------
@@ -65,10 +82,23 @@ CHOSEN, NOT FORCED: no generating morphisms
 There is no `Box` generator. Fsk(At) is free on a set of *objects*; its
 only morphisms are built from id, comp, ⊗ and the three structure maps.
 That restriction is what UVZ's coherence theorem covers, and it is what
-buys decidable equality and duplicate-free homset enumeration. Adding
-generating morphisms forfeits both — nothing in the cited results
-extends to that case. Whether the banking model needs them is open and
-belongs in the paper, not here.
+buys decidable equality and duplicate-free homset enumeration.
+
+How far that can be relaxed is now known, and it splits in two:
+
+  - Generators typed atom → atom, forming a category X: covered. Lack &
+    Street, Theorem 12.2: a morphism of the free skew monoidal category
+    on X is a morphism φ of Fsk together with one X-morphism per atom
+    wire, Xᵢ → Y_{φ(i)}. Equality is equality of the Fsk part plus
+    wire-by-wire equality in X.
+  - Generators typed by formulae, such as `a : A → B⊗B`: not covered by
+    any source read. Bourke & Lack's skew multicategories
+    (arXiv:1708.06088) are the natural home for many-input, one-output
+    generators, but give no free construction on them and no word
+    problem.
+
+Whether the banking model needs either is open and belongs in the paper,
+not here.
 
 CHOSEN, NOT FORCED: no dagger
 -----------------------------
@@ -416,6 +446,11 @@ MUST_NOT_IDENTIFY = [
         Then(Tensor(Rho(X), Lam(Y)), Alpha(X, I, Y)),
         Id(Tens(X, Tens(I, Y))),
     ),
+    # Uustalu §3. Not an idempotent against the identity: two different
+    # structure maps between *different* objects, so it is also the
+    # literature witness that a structure-map instance need not be forced
+    # by its type (see DERIVABILITY_AUDIT, λ_{I⊗X}).
+    ("λ_{I⊗X} ≠ id⊗λ_X", Lam(Tens(I, X)), Tensor(Id(I), Lam(X))),
 ]
 
 
@@ -427,6 +462,20 @@ NO_MAP_EXISTS = [
     ("no λ⁻¹", X, Tens(I, X)),
     ("no ρ⁻¹", Tens(X, I), X),
     ("no α⁻¹", Tens(X, Tens(Y, Z)), Tens(Tens(X, Y), Z)),
+]
+
+
+# Object pairs with equal frontier and no map in *either* direction.
+# Uustalu §3 gives the first direction; the second was found by
+# `skew_seq.hom_exists` (a guess that it existed failed when run). Kept
+# apart from NO_MAP_EXISTS because those pairs each have a forward map,
+# and the test there asserts it to stay non-vacuous.
+NO_MAP_EITHER_WAY = [
+    (
+        "X((YZ)I) and (XY)(ZI) incomparable",
+        Tens(X, Tens(Tens(Y, Z), I)),
+        Tens(Tens(X, Y), Tens(Z, I)),
+    ),
 ]
 
 
@@ -500,8 +549,10 @@ def _test_typing_rejects_bad_composition():
 
 def _test_structure_map_directions():
     # Fails under: any transcription error in dom/cod. These directions
-    # are the definition of *left* skew; reversing ρ or λ gives a
-    # different (right skew) structure that the banking axioms do not claim.
+    # are the definition of *left* skew. Right skew reverses all three maps
+    # (Szlachányi Def. 2.1), and is left skew on the opposite category
+    # (Uustalu §2), so "left" is a claim about which way the modelled
+    # morphisms point. Reversing only λ or only ρ gives neither.
     assert Lam(X).dom == I @ X and Lam(X).cod == X
     assert Rho(X).dom == X and Rho(X).cod == X @ I
     assert Alpha(X, Y, Z).dom == (X @ Y) @ Z
@@ -550,7 +601,7 @@ def _test_frontier_is_not_sufficient():
     # Fails under: nothing in this file; this is a claim about Fsk(At)
     # that `skew_seq.py` must discharge. Recorded here so the obligation
     # is written down before the decision procedure exists.
-    for name, a, b in NO_MAP_EXISTS:
+    for name, a, b in NO_MAP_EXISTS + NO_MAP_EITHER_WAY:
         assert frontier(a) == frontier(b), name
         assert a != b, name
 
@@ -581,7 +632,7 @@ def _run():
     print(f"\n{len(tests)} tests passed")
     print(f"{len(AXIOMS)} equations the normaliser must respect")
     print(f"{len(MUST_NOT_IDENTIFY)} parallel pairs it must keep distinct")
-    print(f"{len(NO_MAP_EXISTS)} homsets it must report empty")
+    print(f"{len(NO_MAP_EXISTS) + 2 * len(NO_MAP_EITHER_WAY)} homsets it must report empty")
 
 
 if __name__ == "__main__":
