@@ -116,7 +116,7 @@ one.
 
 ## State
 
-Six suites, plain `assert`, no framework. Each runs directly.
+Seven suites, plain `assert`, no framework. Each runs directly.
 
 **`skew_terms.py`** (10 tests). Objects, terms and typing, and the
 obligations stated as data before any procedure existed to meet them:
@@ -203,6 +203,20 @@ One test records what makes the model linear: Δ(e + a) is e⊗e + a⊗a, not
 structure §3 then supplies is not built here. Nothing in the term layer
 imports these files.
 
+**`interp_bialgebra.py`, `test_interp_bialgebra.py`** (6 tests). Terms
+interpreted in the skew structure Szlachányi §3 builds from GF(2)[W],
+transcribed as printed and turned to lsm's left orientation by reversing
+the product: A⊗B goes to B ⊗ A ⊗ H. Nothing copies a module; the only
+copying is Δ on basis elements. Like the writer model it is not claimed
+faithful and decides nothing. Every axiom holds and every
+`MUST_NOT_IDENTIFY` pair stays distinct for W free, Z/2 and {e, a}; all
+collapse for W = 1. α at atom components is a bijection of bases for Z/2
+and not for {e, a}, exactly, matching §3's remark that γ is invertible
+when the bialgebroid is Hopf. That k[W] is Hopf iff W is a group is not
+cited; those two cases are what is checked. For W free the inner log of
+α's image is a suffix of the outer one, where the writer model's is a
+prefix: as transcribed, the two models multiply logs in opposite orders.
+
 **Mutation.** There is no `mutate.py` yet. One-off checks have been run:
 eight mutants against the first two suites when they were written, and
 six against the three term-layer and ∆⊥ suites, with every test run on
@@ -221,7 +235,13 @@ data were run against `test_bialgebra.py`. Five were caught. One passed,
 as expected: m as v·w, the bialgebra of the opposite monoid. On the first
 run it was caught, because the test's product on H ⊗ H multiplied in W
 rather than through H's own m; the test was corrected, and one comment
-that named the wrong catcher was corrected with it.
+that named the wrong catcher was corrected with it. Seven mutants of
+the linear interpretation were run against `test_interp_bialgebra.py`,
+and all seven were caught. γ multiplying h·g passes every axiom, since
+it is the opposite monoid's model; only the transcription test and the
+suffix test catch it. The group test's comment named the wrong catcher;
+a seventh mutant, γ dropping g, was added to give it one, and the comments
+were corrected to what was observed.
 
 ## Not decided
 
