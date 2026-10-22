@@ -287,6 +287,15 @@ Checked against the source, all attached to this project:
   231 (2012), read as arXiv:1201.4981v2. Definition 2.1 and the left/right
   duality following it.
   §7: Proposition 7.2 (bimonad-induced right-monoidal structure, (81)–(84)), and the left-handed form stated after Definition 7.3 (M ⊙ N := OM ⊗ N), read from the page images. The left form is stated there, not proved; it follows by the reversal duality after Def. 2.1.
+  §3: the right-monoidal structure on right R-modules induced by a right
+  R-bialgebroid H, M ∗ N := M ⊗_{R₁} (N ⊗_{R₂} H), with η, ε and γ as
+  given there (30), read from the page image. That this is right-monoidal
+  is stated there ("easy to verify, using the bialgebroid axioms"), not
+  proved. The remark following it, also read: γ is, up to isomorphism,
+  the Galois map g ⊗ h ↦ h⁽¹⁾ ⊗ gh⁽²⁾, so the bialgebroid is a Hopf
+  algebroid precisely when γ is invertible; "Hopf algebroid" is taken in
+  the sense of Schauenburg, not read. The structure is right-monoidal; it
+  is used here in left form by the reversal duality after Def. 2.1.
 - **Lack & Street**, *Triangulations, orientals, and skew monoidal
   categories*, Adv. Math. 258 (2014), read as arXiv:1302.4488v1, whose
   numbering is cited. §2, (2.4)–(2.8) and the idempotents ε₀, εˡ, εʳ; §3,
@@ -313,7 +322,12 @@ theory of clubs (*An abstract approach to coherence*, LNM 281, 1972),
 which is not attached. *Braided skew monoidal categories*, TAC 35, would
 be the first thing to read if swaps are taken up; not yet read, and its
 authorship not checked.
+
 Lack & Street, Skew monoidales, skew warpings and quantum categories, TAC 26 (2012) — the general skew-warping construction. Bruguières, Lack & Virelizier, Prop. 2.6, the source of Szlachányi Prop. 7.1.
+
+Schauenburg, *Duals and doubles of quantum groupoids*, Contemp. Math. 267
+(2000), 273–299 — the sense of "Hopf algebroid" in Szlachányi §3's
+invertibility remark.
 
 Heunen & Vicary, *Categories for Quantum Theory*, is attached for the
 `cqm` strand. Nothing here is cited to it.
