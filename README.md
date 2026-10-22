@@ -116,7 +116,7 @@ one.
 
 ## State
 
-Three suites, plain `assert`, no framework. Each runs directly.
+Four suites, plain `assert`, no framework. Each runs directly.
 
 **`skew_terms.py`** (10 tests). Objects, terms and typing, and the
 obligations stated as data before any procedure existed to meet them:
@@ -159,11 +159,25 @@ manages, whose `equal` is sound but incomplete and whose FdHilb functor
 is not faithful. It is not because skew is easier. This presentation was
 solved in the literature.
 
+**`writer.py`, `test_writer.py`** (4 tests). Data for a model, not yet a
+model: the writer monad OM = W × M on (Set, ×, 1), with the diagonal
+opmonoidal structure. The tests check the monad laws and Szlachányi's
+(65)–(71), the hypotheses of his Proposition 7.2, elementwise on samples
+for W free on two letters, Z/2 and 1. A pass is evidence on those
+samples, not a proof. No source read states that this monad meets the
+hypotheses; that is what the suite is for. The skew structure the
+proposition then supplies is not built here. Nothing in the term layer
+imports these files.
+
 **Mutation.** There is no `mutate.py` yet. One-off checks have been run:
 eight mutants against the first two suites when they were written, and
-six against the current three, with every test run on its own under each.
-Every mutant was caught. Two test comments named the wrong catcher and
-were corrected to what was observed.
+six against the three term-layer and ∆⊥ suites, with every test run on
+its own under each. Every mutant was caught. Two test comments named the
+wrong catcher and were corrected to what was observed. Five mutants of
+the writer data were run against `test_writer.py`. Four were caught. One
+passed, as expected: ω as v·w, which is the writer monad of the opposite
+monoid. One of the four caught had been believed valid: writing the log
+on the first factor only fails (66), and `writer.py` says so.
 
 ## Not decided
 
