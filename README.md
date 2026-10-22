@@ -116,7 +116,7 @@ one.
 
 ## State
 
-Four suites, plain `assert`, no framework. Each runs directly.
+Five suites, plain `assert`, no framework. Each runs directly.
 
 **`skew_terms.py`** (10 tests). Objects, terms and typing, and the
 obligations stated as data before any procedure existed to meet them:
@@ -165,9 +165,30 @@ opmonoidal structure. The tests check the monad laws and Szlachányi's
 (65)–(71), the hypotheses of his Proposition 7.2, elementwise on samples
 for W free on two letters, Z/2 and 1. A pass is evidence on those
 samples, not a proof. No source read states that this monad meets the
-hypotheses; that is what the suite is for. The skew structure the
-proposition then supplies is not built here. Nothing in the term layer
+hypotheses; that is what the suite is for. Nothing in the term layer
 imports these files.
+
+**`interp_writer.py`, `test_interp_writer.py`** (6 tests). Terms
+interpreted in the skew structure Szlachányi's left form (after Def. 7.3)
+builds from that monad: A⊗B goes to (W × A) × B. Each structure map is
+composed from the formula, not written out by hand. Unlike ∆⊥ this model
+is not claimed faithful, so it decides nothing; it is a model in which
+the structure maps can be inspected. Three choices of W witness three
+different things:
+
+- *W free:* every axiom holds, every `MUST_NOT_IDENTIFY` pair stays
+  distinct, λ and ρ have no inverse, and α_{X,Y,Z} is injective but not
+  onto. Its image keeps the inner log a prefix of the outer one, and
+  ((e, x), ((p, y), z)) is not hit.
+- *W = Z/2:* λ and ρ still have no inverse and every pair stays
+  distinct, but α_{X,Y,Z} is a bijection. These samples are whole sets,
+  so this is exact. That α at atom components is invertible exactly when W
+  is a group is argued, not tested beyond these two cases.
+- *W = 1:* every pair collapses. This is the strict case, which belongs
+  with `cqm`.
+
+As with the writer suite, a pass on the free monoid is evidence on
+samples, not a proof.
 
 **Mutation.** There is no `mutate.py` yet. One-off checks have been run:
 eight mutants against the first two suites when they were written, and
@@ -177,7 +198,12 @@ wrong catcher and were corrected to what was observed. Five mutants of
 the writer data were run against `test_writer.py`. Four were caught. One
 passed, as expected: ω as v·w, which is the writer monad of the opposite
 monoid. One of the four caught had been believed valid: writing the log
-on the first factor only fails (66), and `writer.py` says so.
+on the first factor only fails (66), and `writer.py` says so. Six
+mutants of the interpretation were run against `test_interp_writer.py`,
+and all six were caught. Building γ̇ with ω as v·w passes every axiom,
+since it is the opposite monoid's model; only the elementwise test and
+the prefix test catch it. Three test comments named the wrong catcher
+and were corrected to what was observed.
 
 ## Not decided
 
