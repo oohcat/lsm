@@ -246,6 +246,7 @@ Checked against the source, all attached to this project:
 - **Szlachányi**, *Skew-monoidal categories and bialgebroids*, Adv. Math.
   231 (2012), read as arXiv:1201.4981v2. Definition 2.1 and the left/right
   duality following it.
+  §7: Proposition 7.2 (bimonad-induced right-monoidal structure, (81)–(84)), and the left-handed form stated after Definition 7.3 (M ⊙ N := OM ⊗ N), read from the page images. The left form is stated there, not proved; it follows by the reversal duality after Def. 2.1.
 - **Lack & Street**, *Triangulations, orientals, and skew monoidal
   categories*, Adv. Math. 258 (2014), read as arXiv:1302.4488v1, whose
   numbering is cited. §2, (2.4)–(2.8) and the idempotents ε₀, εˡ, εʳ; §3,
@@ -272,6 +273,7 @@ theory of clubs (*An abstract approach to coherence*, LNM 281, 1972),
 which is not attached. *Braided skew monoidal categories*, TAC 35, would
 be the first thing to read if swaps are taken up; not yet read, and its
 authorship not checked.
+Lack & Street, Skew monoidales, skew warpings and quantum categories, TAC 26 (2012) — the general skew-warping construction. Bruguières, Lack & Virelizier, Prop. 2.6, the source of Szlachányi Prop. 7.1.
 
 Heunen & Vicary, *Categories for Quantum Theory*, is attached for the
 `cqm` strand. Nothing here is cited to it.
