@@ -116,7 +116,7 @@ one.
 
 ## State
 
-Five suites, plain `assert`, no framework. Each runs directly.
+Six suites, plain `assert`, no framework. Each runs directly.
 
 **`skew_terms.py`** (10 tests). Objects, terms and typing, and the
 obligations stated as data before any procedure existed to meet them:
@@ -190,6 +190,19 @@ different things:
 As with the writer suite, a pass on the free monoid is evidence on
 samples, not a proof.
 
+**`bialgebra.py`, `test_bialgebra.py`** (5 tests). Data for a linear
+model, not yet a model: the monoid bialgebra GF(2)[W], with Δ(w) = w ⊗ w
+and ε(w) = 1, the counterpart of the writer monad in which only the log
+is copied. Szlachányi §3 builds a skew structure from a bialgebroid; that
+a k-bialgebra is one, with source and target the unit map, is argued, not
+cited. The tests check the bialgebra axioms on every basis element and on
+every sum of two, for W free on two letters, Z/2 and {e, a} with a·a = a,
+which is not a group. For the finite monoids this is exact by linearity.
+One test records what makes the model linear: Δ(e + a) is e⊗e + a⊗a, not
+(e + a) ⊗ (e + a), so Δ copies basis elements but no vector. The skew
+structure §3 then supplies is not built here. Nothing in the term layer
+imports these files.
+
 **Mutation.** There is no `mutate.py` yet. One-off checks have been run:
 eight mutants against the first two suites when they were written, and
 six against the three term-layer and ∆⊥ suites, with every test run on
@@ -203,7 +216,12 @@ mutants of the interpretation were run against `test_interp_writer.py`,
 and all six were caught. Building γ̇ with ω as v·w passes every axiom,
 since it is the opposite monoid's model; only the elementwise test and
 the prefix test catch it. Three test comments named the wrong catcher
-and were corrected to what was observed.
+and were corrected to what was observed. Six mutants of the bialgebra
+data were run against `test_bialgebra.py`. Five were caught. One passed,
+as expected: m as v·w, the bialgebra of the opposite monoid. On the first
+run it was caught, because the test's product on H ⊗ H multiplied in W
+rather than through H's own m; the test was corrected, and one comment
+that named the wrong catcher was corrected with it.
 
 ## Not decided
 
