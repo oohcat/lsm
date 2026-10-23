@@ -75,6 +75,14 @@ additive where possible, and nothing goes in ahead of a source that
 licenses it, however useful it looks. The first source to look in is the
 touchstone, UVZ (see [Citations](#citations)).
 
+**Tooling that lets a person check the structure.** The one extension to
+the rule above. A file that adds no mathematics, and only lets a person
+run lsm's existing decision procedures and obligations to validate the
+structure independently, is admitted on that ground in place of a
+citation. It may not add objects, terms, equations or obligations; it
+imports from the term layer and nothing there imports it. Its commit
+message names this rule as its justification.
+
 ## Scope
 
 **Left skew, in these directions:** λ_A : I⊗A → A, ρ_A : A → A⊗I,
@@ -118,7 +126,7 @@ one.
 
 Seven suites, plain `assert`, no framework. Each runs directly.
 
-**`skew_terms.py`** (10 tests). Objects, terms and typing, and the
+**`skew_terms.py`** (15 tests). Objects, terms and typing, and the
 obligations stated as data before any procedure existed to meet them:
 
 - `AXIOMS`: the five axioms, the category laws, interchange and
@@ -135,6 +143,17 @@ obligations stated as data before any procedure existed to meet them:
 - `MUST_NOT_DERIVE_FROM_B_AND_E`: axioms (a), (c), (d), which do not
   follow from (b) and (e) here as they do in the monoidal case. Stated,
   not established; see [Not decided](#not-decided).
+- The notation layer, licensed by the definition: composition and ⊗ on
+  maps are all it uses (UVZ §2, Figure 1). `f >> g` is `Then(f, g)`,
+  `f @ g` is `Tensor(f, g)`, and `A @ f`, `f @ A` whisker with an
+  identity. Python's grouping builds the tree, so `X @ Y @ Z` is
+  (X⊗Y)⊗Z, the domain of α, with no map back from the other bracketing;
+  `@` binds tighter than `>>`. Reprs are valid Python and print every
+  bracket, so `eval(repr(t)) == t` with atoms bound by name, as in
+  `cqm`. There is no `.dag`. Five tests: the round trip, bracketing,
+  each operator against its constructor, typing through `>>`, and the
+  absence of `dag`. Shared with `cqm` as a spelling, not as code:
+  nothing is imported across the projects.
 
 **`skew_seq.py`** (18 tests). The focused sequent calculus of UVZ §5,
 with the decision procedures it yields: `equal` (Theorem 5), `homset`
@@ -217,7 +236,29 @@ cited; those two cases are what is checked. For W free the inner log of
 α's image is a suffix of the outer one, where the writer model's is a
 prefix: as transcribed, the two models multiply logs in opposite orders.
 
-**Mutation.** There is no `mutate.py` yet. One-off checks have been run:
+**`repl.py`** (no tests; admitted under the tooling rule). A
+structure-only REPL, run with `python -i repl.py`. `show` gives a term's
+type or its typing error; `hom` lists a homset; `same` decides equality
+by `skew_seq.equal` and `equal_in_delta` together and raises if they
+disagree; `inv` lists the retractions and sections of a map. Because
+`homset` enumerates all of Hom(cod, dom) (UVZ Thm 6) and `equal` is
+complete (Thm 5), `inv` decides how far a map is from invertible rather
+than sampling it. Run on structure-map instances it separates four
+grades: no map back (λ_X, ρ_X, α_{X,Y,Z}); split epi or split mono
+(λ_I, ρ_I, λ_{I⊗X}, ρ_{X⊗I}); a map back that cancels in neither order
+(α_{X,I,Y}, α_{I,I,X}); invertible (none found). Terms returned by
+`homset` print padded with identities; stripping them is a printing
+choice the notation layer has not made. Results echo in that notation,
+followed by their type.
+
+**Mutation.** There is no `mutate.py` yet. One-off checks have been run.
+Eight mutants of the notation layer were run against `skew_terms.py`:
+Tens and Tensor reprs without brackets, the old λ[X] repr, whiskering
+on the wrong side, `>>` in Mac Lane order, `>>` bypassing Then's type
+check, a `dag` attribute, and Fma @ Term building a Tens. All eight
+were caught, the Tensor repr only after a right-nested tensor of maps
+was added to the round-trip test; no entry of `AXIOMS` or
+`MUST_NOT_IDENTIFY` nests one. Earlier:
 eight mutants against the first two suites when they were written, and
 six against the three term-layer and ∆⊥ suites, with every test run on
 its own under each. Every mutant was caught. Two test comments named the
@@ -264,12 +305,6 @@ Banking models would probably want the second kind. That is a fact about
 those models, not a requirement on lsm: by the increment rule, only the
 first can go in now. Typing alone would survive the second kind;
 the decision procedures would not, and would have to refuse such terms.
-
-**The notation layer.** `cqm`'s operators (`>>`, `@`, whiskering), its
-Python-valid `repr` and its type-printing echo. They need only a
-category and a functor ⊗, which a skew monoidal category has. On this
-side the operators must keep the user's bracketing, and there is no
-`.dag`.
 
 **Independence of (a), (c), (d).** Stated by UVZ §2 and Uustalu §2.
 Kelly's monoidal derivation (Thms 6–7) cancels against isomorphisms,

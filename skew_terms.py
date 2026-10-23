@@ -139,8 +139,12 @@ class Fma:
     the only thing connecting them is `Alpha`, in one direction.
     """
 
-    def __matmul__(self, other: "Fma") -> "Tens":
-        return Tens(self, other)
+    def __matmul__(self, other):
+        # Fma @ Term is whiskering; returning NotImplemented hands it to
+        # Term.__rmatmul__ rather than building a Tens with a term inside.
+        if isinstance(other, Fma):
+            return Tens(self, other)
+        return NotImplemented
 
 
 @dataclass(frozen=True, repr=False)
@@ -166,7 +170,7 @@ class Tens(Fma):
     right: Fma
 
     def __repr__(self) -> str:
-        return f"({self.left}⊗{self.right})"
+        return f"({self.left!r} @ {self.right!r})"
 
 
 def frontier(A: Fma) -> Tuple[str, ...]:
@@ -206,6 +210,29 @@ class Term:
     def cod(self) -> Fma:
         raise NotImplementedError
 
+    # The notation layer. The definition licenses it: it needs only
+    # composition and ⊗ on maps (UVZ §2, Figure 1). Python's own
+    # grouping builds the tree, so `f @ g @ h` is (f@g)@h and `@` binds
+    # tighter than `>>`; repr prints every bracket so the echo shows
+    # which tree was built. No `dag`: α† does not exist (UVZ §2).
+
+    def __rshift__(self, other: "Term") -> "Term":
+        if not isinstance(other, Term):
+            return NotImplemented
+        return Then(self, other)
+
+    def __matmul__(self, other):
+        if isinstance(other, Term):
+            return Tensor(self, other)
+        if isinstance(other, Fma):
+            return Tensor(self, Id(other))
+        return NotImplemented
+
+    def __rmatmul__(self, other):
+        if isinstance(other, Fma):
+            return Tensor(Id(other), self)
+        return NotImplemented
+
 
 @dataclass(frozen=True, repr=False)
 class Id(Term):
@@ -220,7 +247,7 @@ class Id(Term):
         return self.obj
 
     def __repr__(self) -> str:
-        return f"id[{self.obj}]"
+        return f"Id({self.obj!r})"
 
 
 @dataclass(frozen=True, repr=False)
@@ -246,7 +273,7 @@ class Then(Term):
         return self.second.cod
 
     def __repr__(self) -> str:
-        return f"({self.first} ; {self.second})"
+        return f"({self.first!r} >> {self.second!r})"
 
 
 @dataclass(frozen=True, repr=False)
@@ -272,7 +299,7 @@ class Tensor(Term):
         return Tens(self.left.cod, self.right.cod)
 
     def __repr__(self) -> str:
-        return f"({self.left} ⊗ {self.right})"
+        return f"({self.left!r} @ {self.right!r})"
 
 
 @dataclass(frozen=True, repr=False)
@@ -290,7 +317,7 @@ class Lam(Term):
         return self.obj
 
     def __repr__(self) -> str:
-        return f"λ[{self.obj}]"
+        return f"Lam({self.obj!r})"
 
 
 @dataclass(frozen=True, repr=False)
@@ -308,7 +335,7 @@ class Rho(Term):
         return Tens(self.obj, I)
 
     def __repr__(self) -> str:
-        return f"ρ[{self.obj}]"
+        return f"Rho({self.obj!r})"
 
 
 @dataclass(frozen=True, repr=False)
@@ -333,7 +360,7 @@ class Alpha(Term):
         return Tens(self.a, Tens(self.b, self.c))
 
     def __repr__(self) -> str:
-        return f"α[{self.a},{self.b},{self.c}]"
+        return f"Alpha({self.a!r}, {self.b!r}, {self.c!r})"
 
 
 def is_parallel(f: Term, g: Term) -> bool:
@@ -622,6 +649,67 @@ def _test_syntactic_equality_is_not_semantic():
     f = Lam(X)
     assert Then(f, Id(X)) != f
     assert Then(Id(f.dom), f) != f
+
+
+# ---- notation layer ---------------------------------------------------------
+
+_NS = {"X": X, "Y": Y, "Z": Z, "W": W, "I": I,
+       "Id": Id, "Lam": Lam, "Rho": Rho, "Alpha": Alpha}
+
+
+def _test_repr_round_trips():
+    # eval(repr(t)) == t, cqm's convention, with atoms bound by name.
+    # Fails under: repr dropping the brackets of Tens or Tensor (the
+    # re-read tree is left-nested), or any of the old non-Python reprs
+    # (λ[X], id[X], f ; g), which do not parse.
+    terms = [t for _, l, r in AXIOMS + MUST_NOT_IDENTIFY for t in (l, r)]
+    for t in terms:
+        assert eval(repr(t), dict(_NS)) == t, repr(t)
+    for A in (X @ (Y @ Z), (X @ Y) @ Z, (I @ X) @ I):
+        assert eval(repr(A), dict(_NS)) == A, repr(A)
+    # No entry above nests a tensor of maps on the right, so without this
+    # line a Tensor repr missing its brackets survives (mutation-tested).
+    t = Lam(X) @ (Rho(Y) @ Z)
+    assert eval(repr(t), dict(_NS)) == t, repr(t)
+
+
+def _test_operators_keep_bracketing():
+    # The skew-specific point: Python groups `@` to the left, and that
+    # grouping is the tree. Fails under: any flattening of objects, or a
+    # repr that omits brackets (the strings below would not match).
+    assert X @ Y @ Z == Tens(Tens(X, Y), Z) != X @ (Y @ Z)
+    assert repr(X @ Y @ Z) == "((X @ Y) @ Z)"
+    assert (Alpha(X, Y, Z)).dom == X @ Y @ Z
+
+
+def _test_operators_are_the_constructors():
+    # Sugar only: each operator builds exactly the constructor's tree.
+    # Fails under: whiskering on the wrong side, or `>>` composing in
+    # Mac Lane order (g ∘ f) instead of diagrammatic order.
+    f, g = Rho(X), Lam(X)
+    assert Lam(I @ X) >> Lam(X) == Then(Lam(I @ X), Lam(X))
+    assert f @ g == Tensor(f, g)
+    assert Y @ f == Tensor(Id(Y), f)
+    assert f @ Y == Tensor(f, Id(Y))
+    assert isinstance(Y @ f, Term)
+    assert Rho(I) >> Lam(I) == Then(Rho(I), Lam(I))
+    assert (Rho(I) @ X >> Alpha(I, I, X)) == Then(Tensor(Rho(I), Id(X)), Alpha(I, I, X))
+
+
+def _test_operators_keep_typing():
+    # `>>` goes through Then, so ill-typed composites still cannot be
+    # written. Fails under: `>>` building the node without Then's check.
+    try:
+        Rho(X) >> Lam(X)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("ρ_X >> λ_X typed")
+
+
+def _test_no_dagger():
+    # Fails under: copying cqm's operator mixin wholesale, `.dag` included.
+    assert not hasattr(Lam(X), "dag") and not hasattr(Alpha(X, Y, Z), "dag")
 
 
 def _run():
