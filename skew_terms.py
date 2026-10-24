@@ -260,8 +260,9 @@ class Then(Term):
     def __post_init__(self) -> None:
         if self.first.cod != self.second.dom:
             raise TypeError(
-                f"cannot compose: {self.first} ends at {self.first.cod}, "
-                f"{self.second} starts at {self.second.dom}"
+                f"cannot compose {self.first!r} >> {self.second!r}: "
+                f"cod {self.first!r} = {self.first.cod!r} ≠ "
+                f"{self.second.dom!r} = dom {self.second!r}"
             )
 
     @property
@@ -700,11 +701,14 @@ def _test_operators_are_the_constructors():
 
 def _test_operators_keep_typing():
     # `>>` goes through Then, so ill-typed composites still cannot be
-    # written. Fails under: `>>` building the node without Then's check.
+    # written, and the error states the condition that failed in lsm's
+    # terms. Fails under: `>>` building the node without Then's check, or
+    # a message that swaps cod and dom or drops the brackets.
     try:
         Rho(X) >> Lam(X)
-    except TypeError:
-        pass
+    except TypeError as e:
+        assert str(e) == ("cannot compose Rho(X) >> Lam(X): "
+                          "cod Rho(X) = (X @ I) ≠ (I @ X) = dom Lam(X)"), str(e)
     else:
         raise AssertionError("ρ_X >> λ_X typed")
 

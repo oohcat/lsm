@@ -151,7 +151,8 @@ obligations stated as data before any procedure existed to meet them:
   `@` binds tighter than `>>`. Reprs are valid Python and print every
   bracket, so `eval(repr(t)) == t` with atoms bound by name, as in
   `cqm`. There is no `.dag`. Five tests: the round trip, bracketing,
-  each operator against its constructor, typing through `>>`, and the
+  each operator against its constructor, typing through `>>` with an
+  error that states cod ≠ dom, and the
   absence of `dag`. Shared with `cqm` as a spelling, not as code:
   nothing is imported across the projects.
 
@@ -252,10 +253,11 @@ choice the notation layer has not made. Results echo in that notation,
 followed by their type.
 
 **Mutation.** There is no `mutate.py` yet. One-off checks have been run.
-Eight mutants of the notation layer were run against `skew_terms.py`:
+Nine mutants of the notation layer were run against `skew_terms.py`:
 Tens and Tensor reprs without brackets, the old λ[X] repr, whiskering
 on the wrong side, `>>` in Mac Lane order, `>>` bypassing Then's type
-check, a `dag` attribute, and Fma @ Term building a Tens. All eight
+check, a `dag` attribute, Fma @ Term building a Tens, and the typing error
+naming dom for cod. All nine
 were caught, the Tensor repr only after a right-nested tensor of maps
 was added to the round-trip test; no entry of `AXIOMS` or
 `MUST_NOT_IDENTIFY` nests one. Earlier:
